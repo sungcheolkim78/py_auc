@@ -1,0 +1,9 @@
+README.md
+setup.cfg
+setup.py
+py_auc.egg-info/PKG-INFO
+py_auc.egg-info/SOURCES.txt
+py_auc.egg-info/dependency_links.txt
+py_auc.egg-info/entry_points.txt
+py_auc.egg-info/requires.txt
+py_auc.egg-info/top_level.txt
