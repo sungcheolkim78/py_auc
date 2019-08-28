@@ -9,12 +9,18 @@ email: kimsung@us.ibm.com
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import time
-#import seaborn as sns
 
 
 class AUC(object):
-    """ object for area under the curve (AUC) calculation """
+    """ object for area under the curve (AUC) calculation
+    example:
+        import py_auc
+        a = py_auc.AUC(sg.get_asDataFrame())
+        a.cal_auc_rank()
+        a.plot_ROC()
+    """
 
     def __init__(self, data=None, debug=False):
         """
@@ -80,13 +86,16 @@ class AUC(object):
     def _prepare(self):
         """ calculate rank """
 
-        if self._data is not None:
-            return
-
         self._data = pd.DataFrame()
 
         self._data['Score'] = self._scores
         self._data['Class'] = self._classes
+
+        self._spm = self._data.sort_values(by='Score', ascending=False)
+        self._spm['Rank'] = range(self._n)
+        self._spm['FPR'] = (self._spm['Class'] == 0).cumsum().values/self._n0         # FPR
+        self._spm['TPR'] = (self._spm['Class'] == 1).cumsum().values/self._n1         # TPR or recall
+        self._spm['Prec'] = (self._spm['Class'] == 1).cumsum().values/(np.arange(self._n) + 1)    # precision
 
     def cal_auc_rank(self, measure_time=False):
         """ calculate area under ROC using rank algorithm """
@@ -162,76 +171,91 @@ class AUC(object):
 
         return(auprc)
 
-    def plot_rank(self, width=800):
+    def plot_rank(self, sampling=10, filename=''):
         """ plot rank vs class """
 
-        fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(15,5))
+        self._prepare()
 
-        auc = self.cal_auc_rank()
+        cmatrix = self._spm['Class'].values.reshape(sampling, -1)
+        prob = cmatrix.mean(axis=1)
+
+        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,4))
 
         ax0 = axs[0]
-        ax0.plot(self._spm['Rank'], self._spm['Class'])
-        ax0.set_xlabel('Normalized Rank')
-        ax0.set_ylabel('Class')
-
-        cmatrix = self._spm['Class'].values[::-1]
+        ax0.plot(prob, '.')
+        ax0.set_xlabel('Sampled Rank r\'')
+        ax0.set_ylabel('P(1|r\')')
 
         ax1 = axs[1]
-        ax1.imshow(cmatrix.reshape(width, -1).T)
-        ax1.set_xlabel('Rank')
-        ax1.set_ylabel('Rank')
-        ax1.set_title('Class heatmap by Rank')
+        ax1.plot(self._spm['Rank'], self._spm['TPR'], label='TPR')
+        ax1.plot(self._spm['Rank'], self._spm['FPR'], '--', label='FPR')
+        ax1.set_xlabel('Rank r')
+        ax1.set_ylabel('TPR(r), FPR(r)')
+        ax1.legend()
 
-    def plot_ROC(self):
+        ax2 = axs[2]
+        ax2.plot(self._spm['Rank'], self._spm['Prec'], label='prec')
+        bac = (self._spm['TPR'].values + 1.0 - self._spm['FPR'].values)/2.0
+        ax2.plot(self._spm['Rank'], bac, '--', label='bac')
+        ax2.set_xlabel('Rank r')
+        ax2.set_ylabel('Precision(r), bac(r)')
+        ax2.legend()
+
+        if filename == '': filename = 'rank_plot.pdf'
+        plt.savefig(filename, dpi=150)
+
+    def plot_ROC(self, bins=50, filename=''):
         """ calculate ROC curve (receiver operating characteristic curve) """
 
-        self._spm = self._data.sort_values(by='Score', ascending=False)
-        x = (self._spm['Class'] == 0).cumsum().values/self._n0         # FPR
-        y = (self._spm['Class'] == 1).cumsum().values/self._n1         # TPR or recall
-        p = (self._spm['Class'] == 1).cumsum().values/(np.arange(self._n) + 1)    # precision
-        #print(p)
+        self._prepare()
 
-        auc = np.trapz(y, x=x)
+        auc = np.trapz(self._spm['TPR'], x=self._spm['FPR'])
         print('AUC (area under the ROC curve): {0:8.3f}'.format(auc))
 
-        auc = np.trapz(p, x=y)
+        auc = np.trapz(self._spm['Prec'], x=self._spm['TPR'])
         print('AUPRC (area under the PRC curve): {0:8.3f}'.format(auc))
 
         # ROC plot
-        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,5))
+        fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,4))
 
         ax0 = axs[0]
-        ax0.plot(x, y)
-        ax0.set_xlabel('FPR (false positive rate)')
-        ax0.set_ylabel('TPR (true positive rate)')
-        ax0.set_xlim(0, 1)
-        ax0.set_ylim(0, 1)
-        ax0.set_title('Receiver Operating Characteristic Curve)')
+        ax0.plot(self._spm['FPR'], self._spm['TPR'], label='ROC')
+        ax0.set_xlabel('FPR')
+        ax0.set_ylabel('TPR')
+        #ax0.set_xlim(0, 1.1)
+        #ax0.set_ylim(0, 1.1)
 
         # PR plot
         ax1 = axs[1]
-        ax1.plot(y, p)
-        ax1.set_xlim(0, 1)
-        ax1.set_ylim(0, 1)
-        ax1.set_title('Precision-Recall Curve')
+        ax1.plot(self._spm['TPR'], self._spm['Prec'], label='PRC')
         ax1.set_xlabel('Recall (TPR)')
         ax1.set_ylabel('Precision')
+        #ax1.set_xlim(0, 1.1)
+        #ax1.set_ylim(0, 1.1)
+        #ax1.set_title('Precision-Recall Curve')
 
         # score distribution
-
-        bins = np.linspace(min(self._scores), max(self._scores), 100)
-
         ax2 = axs[2]
-        ax2.hist(self._data.loc[self._data['Class'] == 0, 'Score'], bins, alpha=0.5, label='Category 0')
-        ax2.hist(self._data.loc[self._data['Class'] == 1, 'Score'], bins, alpha=0.5, label='Category 1')
+        sns.distplot(self._spm.loc[self._spm['Class']==0, 'Score'], bins=bins, kde=False, rug=True, label='Class 0')
+        sns.distplot(self._spm.loc[self._spm['Class']==1, 'Score'], bins=bins, kde=False, rug=True, label='Class 1')
         ax2.legend(loc='upper right')
         ax2.set_xlabel('Scores')
         ax2.set_ylabel('#')
 
+        if filename == '':
+            filename = 'auc_summary.pdf'
+        plt.savefig(filename, dpi=150)
         plt.show()
 
+
 class Score_generator(object):
-    """ two class score generator """
+    """ two class score generator
+    example:
+        import py_auc
+        sg = py_auc.Score_generator()
+        sg.set0('gaussian', 0, 1, 1000)
+        sg.set1('gaussian', 3, 1, 1000)
+    """
 
     def __init__(self):
         """ """
@@ -248,7 +272,7 @@ class Score_generator(object):
         self._s0 = []
         self._s1 = []
 
-    def generate(self, kind, mu, std, n):
+    def _generate(self, kind, mu, std, n):
         """ set parameters of class """
 
         if kind.lower() not in ['uniform', 'gaussian', 'triangle']:
@@ -271,7 +295,7 @@ class Score_generator(object):
         n : number of samples
         """
 
-        self._s0, self._kind0, self._mu0, self._std0, self._n0 = self.generate(kind, mu, std, n)
+        self._s0, self._kind0, self._mu0, self._std0, self._n0 = self._generate(kind, mu, std, n)
 
     def set1(self, kind, mu, std, n):
         """
@@ -280,7 +304,7 @@ class Score_generator(object):
         std : standard deviation
         n : number of samples
         """
-        self._s1, self._kind1, self._mu1, self._std1, self._n1 = self.generate(kind, mu, std, n)
+        self._s1, self._kind1, self._mu1, self._std1, self._n1 = self._generate(kind, mu, std, n)
 
     def get(self):
         """ get scores """
@@ -299,3 +323,22 @@ class Score_generator(object):
 
         return pd.DataFrame({'Score': scores, 'Class': classes})
 
+    def get_randomSample(self, n):
+        """ get sample of scores """
+
+        temp = self.get_asDataFrame()
+        return temp.sample(n)
+
+    def plot(self, filename=''):
+        """ plot histogram """
+
+        sns.distplot(self._s0, bins=50, kde=False, rug=True, label='Class 0')
+        sns.distplot(self._s1, bins=50, kde=False, rug=True, label='Class 1')
+        plt.xlabel('Score')
+        plt.ylabel('#')
+        plt.legend()
+
+        if filename == '':
+            filename = 'score_hist.pdf'
+
+        plt.savefig('score_hist.pdf', dpi=150)
