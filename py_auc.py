@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import roc_auc_score
+
 
 class AUC(object):
     """ object for area under the curve (AUC) calculation
@@ -92,7 +95,7 @@ class AUC(object):
         self._data['Class'] = self._classes
 
         self._spm = self._data.sort_values(by='Score', ascending=False)
-        self._spm['Rank'] = range(self._n)
+        self._spm['Rank'] = range(self._n+1)[1:]
         self._spm['FPR'] = (self._spm['Class'] == 0).cumsum().values/self._n0         # FPR
         self._spm['TPR'] = (self._spm['Class'] == 1).cumsum().values/self._n1         # TPR or recall
         self._spm['Prec'] = (self._spm['Class'] == 1).cumsum().values/(np.arange(self._n) + 1)    # precision
@@ -103,14 +106,31 @@ class AUC(object):
         if measure_time: start_time = time.time()
 
         self._spm = self._data.sort_values(by='Score', ascending=False)
-        self._spm['Rank'] = np.arange(self._n)/self._n
+        self._spm['Rank'] = np.arange(self._n+1)[1:]/self._n
         mask = self._spm['Class'] == 0
 
         auc = 0.5 + (self._spm[mask].Rank.mean() - self._spm[~mask].Rank.mean())
 
-        if measure_time: print("--- %s seconds ---" % (time.time() - start_time))
+        if measure_time:
+            return (auc, (time.time() - start_time))
+        else:
+            return (auc)
 
-        return(auc)
+    def cal_auc_bac(self, measure_time=False):
+        """ calculate area under ROC using rank algorithm """
+
+        if measure_time: start_time = time.time()
+
+        self._spm = self._data.sort_values(by='Score', ascending=False)
+        self._spm['FPR'] = (self._spm['Class'] == 0).cumsum().values/self._n0         # FPR
+        self._spm['TPR'] = (self._spm['Class'] == 1).cumsum().values/self._n1         # TPR or recall
+
+        auc = np.sum(self._spm['TPR'] + 1 - self._spm['FPR'])/self._n - 0.5
+
+        if measure_time:
+            return (auc, (time.time() - start_time))
+        else:
+            return (auc)
 
     def cal_auc_trapz(self, measure_time=False):
         """ calculate area under ROC using trapz function """
@@ -123,22 +143,22 @@ class AUC(object):
 
         auc = np.trapz(y, x=x)
 
-        if measure_time: print("--- %s seconds ---" % (time.time() - start_time))
-
-        return(auc)
+        if measure_time:
+            return (auc, (time.time() - start_time))
+        else:
+            return (auc)
 
     def cal_auc_sklearn(self, measure_time=False):
         """ calculate area under ROC using scikit-learning """
-
-        from sklearn.metrics import roc_auc_score
 
         if measure_time: start_time = time.time()
 
         auc = roc_auc_score(self._classes, self._scores)
 
-        if measure_time: print("--- %s seconds ---" % (time.time() - start_time))
-
-        return(auc)
+        if measure_time:
+            return (auc, (time.time() - start_time))
+        else:
+            return (auc)
 
     def cal_auprc_rank(self, measure_time=False):
         """ calculate area under precision-recall curve using rank algorithm """
@@ -152,9 +172,10 @@ class AUC(object):
 
         auprc = 0.5*rho*(1.0 + np.sum(p*p)/(self._n*rho*rho))
 
-        if measure_time: print("--- %s seconds ---" % (time.time() - start_time))
-
-        return(auprc)
+        if measure_time:
+            return (auprc, (time.time() - start_time))
+        else:
+            return(auprc)
 
     def cal_auprc_trapz(self, measure_time=False):
         """ calculate area under precision-recall curve using trapz algorithm """
@@ -167,9 +188,23 @@ class AUC(object):
 
         auprc = np.trapz(p, x=y)
 
-        if measure_time: print("--- %s seconds ---" % (time.time() - start_time))
+        if measure_time:
+            return (auprc, (time.time() - start_time))
+        else:
+            return(auprc)
 
-        return(auprc)
+    def cal_auprc_sklearn(self, measure_time=False):
+        """ calculate area under PRC using scikit-learning """
+
+        if measure_time: start_time = time.time()
+
+        auprc = average_precision_score(self._classes, self._scores)
+
+        if measure_time:
+            computetime = time.time() - start_time
+            return (auprc, computetime)
+        else:
+            return auprc
 
     def plot_rank(self, sampling=10, filename=''):
         """ plot rank vs class """
@@ -268,9 +303,13 @@ class Score_generator(object):
         self._std1 = 0
         self._n0 = 100
         self._n1 = 100
+        self._n = self._n0 + self._n1
+        self._rho = self._n1/self._n
 
         self._s0 = []
         self._s1 = []
+        self._prob = []
+        self._sampleN = 0
 
     def _generate(self, kind, mu, std, n):
         """ set parameters of class """
@@ -306,6 +345,9 @@ class Score_generator(object):
         """
         self._s1, self._kind1, self._mu1, self._std1, self._n1 = self._generate(kind, mu, std, n)
 
+        self._n = self._n0 + self._n1
+        self._rho = float(self._n1/self._n)
+
     def get(self):
         """ get scores """
 
@@ -314,11 +356,10 @@ class Score_generator(object):
     def get_asDataFrame(self):
         """ get scores as DataFrame """
 
-        n = self._n0 + self._n1
-        scores = np.zeros(n)
+        scores = np.zeros(self._n)
         scores[:self._n0] = self._s0
         scores[self._n0:] = self._s1
-        classes = np.ones(n)
+        classes = np.ones(self._n)
         classes[:self._n0] = 0
 
         return pd.DataFrame({'Score': scores, 'Class': classes})
@@ -329,11 +370,57 @@ class Score_generator(object):
         temp = self.get_asDataFrame()
         return temp.sample(n)
 
-    def plot(self, filename=''):
+    def get_classProbability(self, sampleSize=100, sampleN=100, measure_time=False):
+        """ calculate probability of class 1 at given rank r """
+
+        if measure_time: start_time = time.time()
+
+        temp = self.get_asDataFrame()
+        temp0 = temp[temp['Class'] == 0]
+        temp1 = temp[temp['Class'] == 1]
+        n1 = int(sampleSize*self._rho)
+        n0 = sampleSize - n1
+
+        res = pd.DataFrame()
+        res['Rank'] = range(sampleSize+1)[1:]
+
+        for i in range(sampleN):
+            a = pd.concat([temp0.sample(n0), temp1.sample(n1)]).sort_values(by='Score', ascending=False)
+            res['Class_{}'.format(i)] = a['Class'].values
+
+        self._prob = res.values[:, 1:sampleN+1].mean(axis=1)
+        res['P(1|r)'] = self._prob
+        res['P(0|r)'] = 1 - self._prob
+
+        res['TPR'] = np.cumsum(res['P(1|r)'])/n1
+        res['FPR'] = np.cumsum(res['P(0|r)'])/n0
+        res['Prec'] = np.cumsum(res['P(1|r)'])/res['Rank']
+        res['bac'] = 0.5*(res['TPR'] + 1.0 - res['FPR'])
+
+        self._sampleN = sampleN
+        self._auc = np.sum(res['P(0|r)']*res['Rank']/n0 - res['P(1|r)']*res['Rank']/n1)/sampleSize + 0.5
+        self._aucbac = 2*np.sum(res['bac'])/sampleSize - 0.5
+        self._auprc = 0.5*self._rho + 0.5*np.sum(res['Prec']*res['Prec'])/n1
+
+        if measure_time:
+            return (res, (time.time()-start_time))
+        else:
+            return res
+
+    def plot(self, filename='', show=True):
         """ plot histogram """
 
-        sns.distplot(self._s0, bins=50, kde=False, rug=True, label='Class 0')
-        sns.distplot(self._s1, bins=50, kde=False, rug=True, label='Class 1')
+        plt.close('all')
+        fig = plt.figure(figsize=(6,5))
+
+        sns.distplot(self._s0, bins=50, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
+        sns.distplot(self._s1, bins=50, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
+        plt.annotate("mu={}\ns={}".format(self._mu0, self._std0), xy=(self._mu0, 0), xytext=(0.25, 0.25),
+                textcoords='axes fraction', horizontalalignment='left',
+                arrowprops=dict(facecolor='black', shrink=0.05))
+        plt.annotate("mu={}\ns={}".format(self._mu1, self._std0), xy=(self._mu1, 0), xytext=(0.75, 0.25),
+                textcoords='axes fraction', horizontalalignment='right',
+                arrowprops=dict(facecolor='black', shrink=0.05))
         plt.xlabel('Score')
         plt.ylabel('#')
         plt.legend()
@@ -341,4 +428,42 @@ class Score_generator(object):
         if filename == '':
             filename = 'score_hist.pdf'
 
-        plt.savefig('score_hist.pdf', dpi=150)
+        plt.savefig(filename, dpi=150)
+        if show: plt.show()
+
+    def plot_prob(self, filename='', ss=100, sn=100, fig=None, show=True, sample=None):
+        """ plot class probability """
+
+        if sample is not None:
+            a = sample
+        else:
+            a = self.get_classProbability(sampleSize=ss, sampleN=sn)
+
+        if fig is None:
+            plt.close('all')
+            fig = plt.figure(figsize=(14, 6))
+
+        ax1 = fig.add_subplot(121)
+        r = range(len(self._prob))
+        ax1.plot(r, self._prob, '.', label='Size={}, #={}'.format(len(self._prob), self._sampleN), alpha=0.5)
+        ax1.set_xlabel('Rank')
+        ax1.set_ylabel('P(1|r)')
+        ax1.set_ylim((-0.05, 1.05))
+        ax1.legend()
+
+        ax2 = fig.add_subplot(122)
+        ax2.plot(a['FPR'], a['TPR'], '.', label='Size={}, #={}, auc={:.4f}'.format(len(self._prob), self._sampleN, self._auc), alpha=0.5)
+        ax2.set_xlabel('FPR')
+        ax2.set_ylabel('TPR')
+        ax2.legend()
+
+        if filename == '':
+            filename = 'classProbability.pdf'
+        plt.savefig(filename, dpi=150)
+
+        if show:
+            plt.show()
+            return
+        else:
+            return fig
+
