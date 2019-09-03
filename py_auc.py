@@ -310,6 +310,7 @@ class Score_generator(object):
         self._s1 = []
         self._prob = []
         self._sampleN = 0
+        self._sampling = []
 
     def _generate(self, kind, mu, std, n):
         """ set parameters of class """
@@ -396,8 +397,12 @@ class Score_generator(object):
         res['FPR'] = np.cumsum(res['P(0|r)'])/n0
         res['Prec'] = np.cumsum(res['P(1|r)'])/res['Rank']
         res['bac'] = 0.5*(res['TPR'] + 1.0 - res['FPR'])
+        self._sampling = res
 
         self._sampleN = sampleN
+        self._sampleSize = sampleSize
+        self._sampleN0 = n0
+        self._sampleN1 = n1
         self._auc = np.sum(res['P(0|r)']*res['Rank']/n0 - res['P(1|r)']*res['Rank']/n1)/sampleSize + 0.5
         self._aucbac = 2*np.sum(res['bac'])/sampleSize - 0.5
         self._auprc = 0.5*self._rho + 0.5*np.sum(res['Prec']*res['Prec'])/n1
