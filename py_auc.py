@@ -22,6 +22,8 @@ class AUC(object):
     """ object for area under the curve (AUC) calculation
     example:
         import py_auc
+
+        sg = py_auc.Score_generator()
         a = py_auc.AUC(sg.get_asDataFrame())
         a.cal_auc_rank()
         a.plot_ROC()
@@ -78,15 +80,6 @@ class AUC(object):
         self._classes[:self._n0] = 0
 
         self._prepare()
-
-    def n(self):
-        return self._n
-
-    def n0(self):
-        return self._n0
-
-    def n1(self):
-        return self._n1
 
     def _prepare(self):
         """ calculate rank """
@@ -292,6 +285,14 @@ class Score_generator(object):
         sg = py_auc.Score_generator()
         sg.set0('gaussian', 0, 1, 1000)
         sg.set1('gaussian', 3, 1, 1000)
+
+        OR
+        sg.set(n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, std1=2)
+
+        res = sg.get_classProbability(sampleSize=100, sampleN=100, measure_time=False)
+        lambda = sg.get_lambda(cprob=res)
+        sg.plot_prob(cprob=res)
+        sg.plot_rank(cprob=res)
     """
 
     def __init__(self):
@@ -388,7 +389,7 @@ class Score_generator(object):
         return temp.sample(n)
 
     def get_classProbability(self, sampleSize=100, sampleN=100, measure_time=False):
-        """ calculate probability of class 1 at given rank r """
+        """ calculate probability of class at given rank r """
 
         if measure_time: start_time = time.time()
 
@@ -448,7 +449,7 @@ class Score_generator(object):
         if self._debug: print('... fitting: final l2, l1 = {}'.format(self._fit_vals))
         return (-self._fit_vals[1], self._fit_vals[0])
 
-    def plot(self, filename='', show=True):
+    def plot_hist(self, filename='', show=True):
         """ plot histogram """
 
         plt.close('all')
@@ -472,8 +473,7 @@ class Score_generator(object):
         plt.savefig(filename, dpi=150)
         if show: plt.show()
 
-    def plot_prob(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None,
-            figsize=None):
+    def plot_prob(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None, figsize=None):
         """ plot class probability """
 
         if cprob is not None:
@@ -528,9 +528,8 @@ class Score_generator(object):
         else:
             return axs
 
-    def plot_rank(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None,
-            figsize=None):
-        """ plot class probability """
+    def plot_rank(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None, figsize=None):
+        """ plot 3 panels of rank related functions """
 
         if cprob is not None:
             a = cprob
