@@ -7,7 +7,7 @@ library for calculating the area under the curve (ROC, PR) of binary classifiers
 Download or clone this repository
 
 ```{bash}
-$ git clone <URL>
+$ git clone git@github.com:sungcheolkim78/py_auc.git
 ```
   
 Install libary locally 
