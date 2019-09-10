@@ -6,8 +6,8 @@ library for calculating the area under the curve (ROC, PR) of binary classifiers
 
 Download or clone this repository
 
-  $ git clone <URL>
+>>  $ git clone <URL>
   
 Install libary locally 
 
-  $ pip3 install -e . 
+>>  $ pip3 install -e . 
