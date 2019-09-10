@@ -15,6 +15,8 @@ import time
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import roc_auc_score
 
+from scipy.optimize import curve_fit
+
 
 class AUC(object):
     """ object for area under the curve (AUC) calculation
@@ -311,6 +313,9 @@ class Score_generator(object):
         self._prob = []
         self._sampleN = 0
         self._sampling = []
+        self._fit_vals = []
+
+        self._debug = False
 
     def _generate(self, kind, mu, std, n):
         """ set parameters of class """
@@ -336,6 +341,8 @@ class Score_generator(object):
         """
 
         self._s0, self._kind0, self._mu0, self._std0, self._n0 = self._generate(kind, mu, std, n)
+        self._n = self._n0 + self._n1
+        self._rho = float(self._n1/self._n)
 
     def set1(self, kind, mu, std, n):
         """
@@ -345,9 +352,18 @@ class Score_generator(object):
         n : number of samples
         """
         self._s1, self._kind1, self._mu1, self._std1, self._n1 = self._generate(kind, mu, std, n)
-
         self._n = self._n0 + self._n1
         self._rho = float(self._n1/self._n)
+
+    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, std1=2):
+        """ generate score distribution """
+
+        n1 = int(n*rho)
+        n0 = n - n1
+        if self._debug: print('... generating {} positive class'.format(n1))
+        self.set1(kind1, mu1, std1, n1)
+        if self._debug: print('... generating {} negative class'.format(n0))
+        self.set0(kind0, mu0, std0, n0)
 
     def get(self):
         """ get scores """
@@ -397,20 +413,40 @@ class Score_generator(object):
         res['FPR'] = np.cumsum(res['P(0|r)'])/n0
         res['Prec'] = np.cumsum(res['P(1|r)'])/res['Rank']
         res['bac'] = 0.5*(res['TPR'] + 1.0 - res['FPR'])
-        self._sampling = res
 
+        self._sampling = res
         self._sampleN = sampleN
         self._sampleSize = sampleSize
         self._sampleN0 = n0
         self._sampleN1 = n1
         self._auc = np.sum(res['P(0|r)']*res['Rank']/n0 - res['P(1|r)']*res['Rank']/n1)/sampleSize + 0.5
         self._aucbac = 2*np.sum(res['bac'])/sampleSize - 0.5
-        self._auprc = 0.5*self._rho + 0.5*np.sum(res['Prec']*res['Prec'])/n1
+        prec = res['Prec'].values
+        self._auprc = 0.5*self._rho + 0.5*np.sum(prec[1:]*prec[:-1])/n1    # new formula
+        if self._debug:
+            print('... sampling: N {}, M {}, auc {}'.format(sampleSize, sampleN, self._auc))
 
         if measure_time:
             return (res, (time.time()-start_time))
         else:
             return res
+
+    def get_lambda(self, cprob=None, init_vals=None):
+        """ fit with Fermi-dirac distribution """
+
+        if cprob is None:
+            if self._sampling is None:
+                self._sampling = self.get_classProbability()
+        else:
+            self._sampling = cprob
+
+        if init_vals is None:
+            init_vals = [0.1, self._sampleSize*self._rho*0.1]
+        if self._debug: print('... fitting: initial l2, l1 = {}'.format(init_vals))
+        x = self._sampling['Rank'].values
+        self._fit_vals, covar = curve_fit(fd, x, self._prob, p0=init_vals)
+        if self._debug: print('... fitting: final l2, l1 = {}'.format(self._fit_vals))
+        return (-self._fit_vals[1], self._fit_vals[0])
 
     def plot(self, filename='', show=True):
         """ plot histogram """
@@ -436,31 +472,51 @@ class Score_generator(object):
         plt.savefig(filename, dpi=150)
         if show: plt.show()
 
-    def plot_prob(self, filename='', ss=100, sn=100, fig=None, show=True, sample=None):
+    def plot_prob(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None,
+            figsize=None):
         """ plot class probability """
 
-        if sample is not None:
-            a = sample
+        if cprob is not None:
+            a = cprob
         else:
             a = self.get_classProbability(sampleSize=ss, sampleN=sn)
 
-        if fig is None:
+        if axs is None:
             plt.close('all')
-            fig = plt.figure(figsize=(14, 6))
+            if figsize is None:
+                fig = plt.figure(figsize=(16, 5))
+            else:
+                fig = plt.figure(figsize=figsize)
+            ax1 = fig.add_subplot(131)
+            ax2 = fig.add_subplot(132)
+            ax3 = fig.add_subplot(133)
+            axs = (ax1, ax2, ax3)
+        else:
+            ax1 = axs[0]
+            ax2 = axs[1]
+            ax3 = axs[2]
 
-        ax1 = fig.add_subplot(121)
+        if label is None:
+            label = 'Size={}, #={}'.format(len(self._prob), self._sampleN)
+
         r = range(len(self._prob))
-        ax1.plot(r, self._prob, '.', label='Size={}, #={}'.format(len(self._prob), self._sampleN), alpha=0.5)
+        ax1.plot(r, self._prob, '.', label=label, alpha=0.5)
         ax1.set_xlabel('Rank')
         ax1.set_ylabel('P(1|r)')
         ax1.set_ylim((-0.05, 1.05))
         ax1.legend()
 
-        ax2 = fig.add_subplot(122)
-        ax2.plot(a['FPR'], a['TPR'], '.', label='Size={}, #={}, auc={:.4f}'.format(len(self._prob), self._sampleN, self._auc), alpha=0.5)
+        ax2.plot(a['FPR'], a['TPR'], '.', label=label, alpha=0.5)
         ax2.set_xlabel('FPR')
         ax2.set_ylabel('TPR')
+        ax2.set_title('ROC')
         ax2.legend()
+
+        ax3.plot(a['TPR'], a['Prec'], '.', label=label, alpha=0.5)
+        ax3.set_xlabel('TPR')
+        ax3.set_ylabel('Prec')
+        ax3.set_title('PRC')
+        ax3.legend()
 
         if filename == '':
             filename = 'classProbability.pdf'
@@ -470,5 +526,67 @@ class Score_generator(object):
             plt.show()
             return
         else:
-            return fig
+            return axs
 
+    def plot_rank(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None,
+            figsize=None):
+        """ plot class probability """
+
+        if cprob is not None:
+            a = cprob
+        else:
+            a = self.get_classProbability(sampleSize=ss, sampleN=sn)
+
+        if axs is None:
+            plt.close('all')
+            if figsize is None:
+                fig = plt.figure(figsize=(14, 5))
+            else:
+                fig = plt.figure(figsize=figsize)
+            ax1 = fig.add_subplot(131)
+            ax2 = fig.add_subplot(132)
+            ax3 = fig.add_subplot(133)
+            axs = (ax1, ax2, ax3)
+        else:
+            ax1 = axs[0]
+            ax2 = axs[1]
+            ax3 = axs[2]
+
+        if label is None:
+            label = 'Size={}, #={}'.format(len(self._prob), self._sampleN)
+
+        r = a['Rank']
+        ax1.plot(r, self._prob, '.', label=label, alpha=0.5)
+        ax1.set_xlabel('Rank')
+        ax1.set_ylabel('P(1|r)')
+        ax1.set_ylim((-0.05, 1.05))
+        if len(self._fit_vals) == 2:
+            msg = 'Fit: {:.3f}, {:.3f}'.format(self._fit_vals[0], self._fit_vals[1])
+            ax1.plot(r, fd(r, self._fit_vals[0], self._fit_vals[1]), label=msg)
+        ax1.legend()
+
+        ax2.plot(a['Rank'], a['bac'], '.', label=label, alpha=0.5)
+        ax2.set_xlabel('Rank')
+        ax2.set_ylabel('bac')
+        #ax2.set_title('ROC')
+        ax2.legend()
+
+        ax3.plot(a['Rank'], a['Prec']*a['Prec'], '.', label=label, alpha=0.5)
+        ax3.set_xlabel('Rank')
+        ax3.set_ylabel('Prec^2')
+        #ax3.set_title('PRC')
+        ax3.legend()
+
+        if filename == '':
+            filename = 'rank_class_Probability.pdf'
+        plt.savefig(filename, dpi=150)
+
+        if show:
+            plt.show()
+            return
+        else:
+            return axs
+
+def fd(x, l1, l2):
+    """ fermi-dirac distribution """
+    return 1./(1.+np.exp(l1*x - l2))
