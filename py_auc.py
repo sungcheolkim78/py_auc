@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import time
 
+from numba import njit
+
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import roc_auc_score
 
@@ -586,6 +588,7 @@ class Score_generator(object):
         else:
             return axs
 
+@njit(cache=True, fastmath=True)
 def fd(x, l1, l2):
     """ fermi-dirac distribution """
     return 1./(1.+np.exp(l1*x - l2))
