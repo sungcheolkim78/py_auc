@@ -4,6 +4,9 @@ test new algorithm
 
 """
 
+import numpy as np
+import py_auc
+
 class Score_generator(object):
     """ two class score generator """
 
@@ -29,7 +32,7 @@ class Score_generator(object):
             kind = 'uniform'
 
         if kind.lower() == 'uniform':
-            temp = np.random.uniform(low=mu-std, high=mu0+std0, size=n)
+            temp = np.random.uniform(low=mu-std, high=self._mu0+self._std0, size=n)
         elif kind.lower() == 'gaussian':
             temp = np.random.normal(loc=mu, scale=std, size=n)
         elif kind.lower() == 'triangle':

@@ -1,0 +1,53 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	/9fcdb06/
+AUC	py_auc.py	/^class AUC(object):$/;"	c
+Installation	README.md	/^## Installation$/;"	s
+Score_generator	py_auc.py	/^class Score_generator(object):$/;"	c
+Score_generator	test.py	/^class Score_generator(object):$/;"	c
+Usage	README.md	/^## Usage$/;"	s
+__init__	py_auc.py	/^    def __init__(self):$/;"	m	class:Score_generator
+__init__	py_auc.py	/^    def __init__(self, data=None, debug=False):$/;"	m	class:AUC
+__init__	test.py	/^    def __init__(self):$/;"	m	class:Score_generator
+_generate	py_auc.py	/^    def _generate(self, kind, mu, std, n):$/;"	m	class:Score_generator
+_prepare	py_auc.py	/^    def _prepare(self):$/;"	m	class:AUC
+cal_auc_bac	py_auc.py	/^    def cal_auc_bac(self, measure_time=False):$/;"	m	class:AUC
+cal_auc_rank	py_auc.py	/^    def cal_auc_rank(self, measure_time=False):$/;"	m	class:AUC
+cal_auc_sklearn	py_auc.py	/^    def cal_auc_sklearn(self, measure_time=False):$/;"	m	class:AUC
+cal_auc_trapz	py_auc.py	/^    def cal_auc_trapz(self, measure_time=False):$/;"	m	class:AUC
+cal_auprc_rank	py_auc.py	/^    def cal_auprc_rank(self, measure_time=False):$/;"	m	class:AUC
+cal_auprc_sklearn	py_auc.py	/^    def cal_auprc_sklearn(self, measure_time=False):$/;"	m	class:AUC
+cal_auprc_trapz	py_auc.py	/^    def cal_auprc_trapz(self, measure_time=False):$/;"	m	class:AUC
+fd	py_auc.py	/^def fd(x, l1, l2):$/;"	f
+generate	test.py	/^    def generate(self, kind, mu, std, n):$/;"	m	class:Score_generator
+get	py_auc.py	/^    def get(self):$/;"	m	class:Score_generator
+get	test.py	/^    def get(self):$/;"	m	class:Score_generator
+get_asDataFrame	py_auc.py	/^    def get_asDataFrame(self):$/;"	m	class:Score_generator
+get_classProbability	py_auc.py	/^    def get_classProbability(self, sampleSize=100, sampleN=100, measure_time=False):$/;"	m	class:Score_generator
+get_classes_scores	py_auc.py	/^    def get_classes_scores(self, c, s):$/;"	m	class:AUC
+get_cprob	py_auc.py	/^    def get_cprob(self, sampleN=100, measure_time=False):$/;"	m	class:Score_generator
+get_lambda	py_auc.py	/^    def get_lambda(self, cprob=None, init_vals=None):$/;"	m	class:Score_generator
+get_randomSample	py_auc.py	/^    def get_randomSample(self, n):$/;"	m	class:Score_generator
+get_scores	py_auc.py	/^    def get_scores(self, s0, s1):$/;"	m	class:AUC
+here	setup.py	/^here = path.abspath(path.dirname(__file__))$/;"	v
+long_description	setup.py	/^    long_description = f.read()$/;"	v
+np	py_auc.py	/^import numpy as np$/;"	I
+pd	py_auc.py	/^import pandas as pd$/;"	I
+plot_ROC	py_auc.py	/^    def plot_ROC(self, bins=50, filename=''):$/;"	m	class:AUC
+plot_hist	py_auc.py	/^    def plot_hist(self, filename='', show=True):$/;"	m	class:Score_generator
+plot_prob	py_auc.py	/^    def plot_prob(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None/;"	m	class:Score_generator
+plot_rank	py_auc.py	/^    def plot_rank(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None/;"	m	class:Score_generator
+plot_rank	py_auc.py	/^    def plot_rank(self, sampling=10, filename=''):$/;"	m	class:AUC
+plt	py_auc.py	/^import matplotlib.pyplot as plt$/;"	I
+py_auc: probability based binary classifier metric calculation library	README.md	/^# py_auc: probability based binary classifier metric calculation library$/;"	c
+set	py_auc.py	/^    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, st/;"	m	class:Score_generator
+set0	py_auc.py	/^    def set0(self, kind, mu, std, n):$/;"	m	class:Score_generator
+set0	test.py	/^    def set0(self, kind, mu, std, n):$/;"	m	class:Score_generator
+set1	py_auc.py	/^    def set1(self, kind, mu, std, n):$/;"	m	class:Score_generator
+set1	test.py	/^    def set1(self, kind, mu, std, n):$/;"	m	class:Score_generator
+sns	py_auc.py	/^import seaborn as sns$/;"	I

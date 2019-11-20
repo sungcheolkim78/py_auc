@@ -443,7 +443,7 @@ class Score_generator(object):
         n0 = sampleN - n1
 
         res = pd.DataFrame()
-        res['Rank'] = range(sampleSize+1)[1:]
+        res['Rank'] = range(sampleN+1)[1:]
 
         for i in range(sampleN):
             self.set0(self._kind0, self._mu0, self._std0, n0)
@@ -466,15 +466,15 @@ class Score_generator(object):
 
         self._sampling = res
         self._sampleN = sampleN
-        self._sampleSize = sampleSize
+        self._sampleSize = sampleN
         self._sampleN0 = n0
         self._sampleN1 = n1
-        self._auc = np.sum(res['P(0|r)']*res['Rank']/n0 - res['P(1|r)']*res['Rank']/n1)/sampleSize + 0.5
-        self._aucbac = 2*np.sum(res['bac'])/sampleSize - 0.5
+        self._auc = np.sum(res['P(0|r)']*res['Rank']/n0 - res['P(1|r)']*res['Rank']/n1)/sampleN + 0.5
+        self._aucbac = 2*np.sum(res['bac'])/sampleN - 0.5
         prec = res['Prec'].values
         self._auprc = 0.5*self._rho + 0.5*np.sum(prec[1:]*prec[:-1])/n1    # new formula
         if self._debug:
-            print('... sampling: N {}, M {}, auc {}'.format(sampleSize, sampleN, self._auc))
+            print('... sampling: N {}, M {}, auc {}'.format(sampleN, sampleN, self._auc))
 
         if measure_time:
             return (res, (time.time()-start_time))

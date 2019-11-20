@@ -7,13 +7,13 @@ library for calculating the area under the curve (ROC, PR) of binary classifiers
 Download or clone this repository
 
 ```{bash}
-$ git clone git@github.com:sungcheolkim78/py_auc.git
+> git clone git@github.com:sungcheolkim78/py_auc.git
 ```
   
 Install libary locally
 
 ```{bash}
-$ pip3 install -e .
+> pip3 install -e .
 ```
 
 ## Usage
@@ -28,4 +28,4 @@ res = sg0.get_classProbability(sampleSize=200, sampleN=500)
 sg0.plot_rank(cprob=res)
 ```
 
-Score_generator class has key methods; 
+Score_generator class has key methods;
