@@ -510,7 +510,7 @@ class Score_generator(object):
         sns.distplot(self._s0, bins=bins, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
         sns.distplot(self._s1, bins=bins, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
         x = np.linspace(self._mu0-2*self._std0, self._mu0+2*self._std0, bins)
-        y = np.exp(-(x - self.mu0)^2/(2*self._std0^2))*np.sqrt(2/np.pi)*self._sampleN
+        y = np.exp(-(x - self._mu0)^2/(2*self._std0^2))*np.sqrt(2/np.pi)*self._sampleN
         plt.plot(x, y)
         
         plt.annotate("mu={}\ns={}".format(self._mu0, self._std0), xy=(self._mu0, 0), xytext=(0.25, 0.25),
