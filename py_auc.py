@@ -434,6 +434,53 @@ class Score_generator(object):
         else:
             return res
 
+    def get_cprob(self, sampleN=100, measure_time=False):
+        """ calculate probability of class at given rank r """
+
+        if measure_time: start_time = time.time()
+
+        n1 = int(sampleN*self._rho)
+        n0 = sampleN - n1
+
+        res = pd.DataFrame()
+        res['Rank'] = range(sampleSize+1)[1:]
+
+        for i in range(sampleN):
+            self.set0(self._kind0, self._mu0, self._std0, n0)
+            self.set1(self._kind1, self._mu1, self._std1, n1)
+            temp = self.get_asDataFrame()
+            temp0 = temp[temp['Class'] == 0]
+            temp1 = temp[temp['Class'] == 1]
+
+            a = pd.concat([temp0.sample(n0), temp1.sample(n1)]).sort_values(by='Score', ascending=False)
+            res['Class_{}'.format(i)] = a['Class'].values
+
+        self._prob = res.values[:, 1:sampleN+1].mean(axis=1)
+        res['P(1|r)'] = self._prob
+        res['P(0|r)'] = 1 - self._prob
+
+        res['TPR'] = np.cumsum(res['P(1|r)'])/n1
+        res['FPR'] = np.cumsum(res['P(0|r)'])/n0
+        res['Prec'] = np.cumsum(res['P(1|r)'])/res['Rank']
+        res['bac'] = 0.5*(res['TPR'] + 1.0 - res['FPR'])
+
+        self._sampling = res
+        self._sampleN = sampleN
+        self._sampleSize = sampleSize
+        self._sampleN0 = n0
+        self._sampleN1 = n1
+        self._auc = np.sum(res['P(0|r)']*res['Rank']/n0 - res['P(1|r)']*res['Rank']/n1)/sampleSize + 0.5
+        self._aucbac = 2*np.sum(res['bac'])/sampleSize - 0.5
+        prec = res['Prec'].values
+        self._auprc = 0.5*self._rho + 0.5*np.sum(prec[1:]*prec[:-1])/n1    # new formula
+        if self._debug:
+            print('... sampling: N {}, M {}, auc {}'.format(sampleSize, sampleN, self._auc))
+
+        if measure_time:
+            return (res, (time.time()-start_time))
+        else:
+            return res
+
     def get_lambda(self, cprob=None, init_vals=None):
         """ fit with Fermi-dirac distribution """
 
@@ -587,6 +634,7 @@ class Score_generator(object):
             return
         else:
             return axs
+
 
 @njit(cache=True, fastmath=True)
 def fd(x, l1, l2):
