@@ -439,6 +439,7 @@ class Score_generator(object):
 
         n1 = int(sampleN*self._rho)
         n0 = sampleN - n1
+        self._sampleSize = sampleN
 
         res = pd.DataFrame()
         res['Rank'] = range(sampleN+1)[1:]
@@ -475,7 +476,10 @@ class Score_generator(object):
             print('... sampling: N {}, M {}, auc {}'.format(sampleN, sampleN, self._auc))
 
         if measure_time:
-            return (res, (time.time()-start_time))
+            mtime = time.time() - start_time
+            if self._debug:
+                print('compute time: {} sec'.format(mtime))
+            return (res, mtime)
         else:
             return res
 
@@ -499,11 +503,16 @@ class Score_generator(object):
     def plot_hist(self, filename='', show=True):
         """ plot histogram """
 
+        bins = 50
         plt.close('all')
         fig = plt.figure(figsize=(6,5))
 
-        sns.distplot(self._s0, bins=50, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
-        sns.distplot(self._s1, bins=50, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
+        sns.distplot(self._s0, bins=bins, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
+        sns.distplot(self._s1, bins=bins, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
+        x = np.linspace(self._mu0-2*self._std0, self._mu0+2*self._std0, bins)
+        y = np.exp(-(x - self.mu0)^2/(2*self._std0^2))*np.sqrt(2/np.pi)*self._sampleN
+        plt.plot(x, y)
+        
         plt.annotate("mu={}\ns={}".format(self._mu0, self._std0), xy=(self._mu0, 0), xytext=(0.25, 0.25),
                 textcoords='axes fraction', horizontalalignment='left',
                 arrowprops=dict(facecolor='black', shrink=0.05))
