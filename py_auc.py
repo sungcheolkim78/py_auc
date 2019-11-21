@@ -326,12 +326,18 @@ class Score_generator(object):
 
         if kind.lower() == 'uniform':
             temp = np.random.uniform(low=mu-std, high=mu+std, size=n)
+            shapex = np.array([mu-2*std, mu-std, mu-std, mu+std, mu+std, mu+2*std])
+            shapey = np.array([0, 0, 1/(2*std), 1/(2*std), 0, 0])
         elif kind.lower() == 'gaussian':
             temp = np.random.normal(loc=mu, scale=std, size=n)
+            shapex = np.linspace(mu-2.5*std, mu+2.5*std, 50)
+            shapey = 1/(std * np.sqrt(2 * np.pi)) * np.exp( - (shapex - mu)**2 / (2 * std**2))
         elif kind.lower() == 'triangle':
             temp = np.random.triangular(mu-std, mu, mu+std, size=n)
+            shapex = np.array([mu-2*std, mu-std, mu, mu+std, mu+2*std])
+            shapey = np.array([0, 0, 1/std, 0, 0])
 
-        return temp, kind, mu, std, n
+        return temp, kind, mu, std, n, shapex, shapey
 
     def set0(self, kind, mu, std, n):
         """
@@ -341,7 +347,7 @@ class Score_generator(object):
         n : number of samples
         """
 
-        self._s0, self._kind0, self._mu0, self._std0, self._n0 = self._generate(kind, mu, std, n)
+        self._s0, self._kind0, self._mu0, self._std0, self._n0, self._shapex0, self._shapey0 = self._generate(kind, mu, std, n)
         self._n = self._n0 + self._n1
         self._rho = float(self._n1/self._n)
 
@@ -352,7 +358,7 @@ class Score_generator(object):
         std : standard deviation
         n : number of samples
         """
-        self._s1, self._kind1, self._mu1, self._std1, self._n1 = self._generate(kind, mu, std, n)
+        self._s1, self._kind1, self._mu1, self._std1, self._n1, self._shapex1, self._shapey1 = self._generate(kind, mu, std, n)
         self._n = self._n0 + self._n1
         self._rho = float(self._n1/self._n)
 
@@ -479,39 +485,41 @@ class Score_generator(object):
             mtime = time.time() - start_time
             if self._debug:
                 print('compute time: {} sec'.format(mtime))
-            return (res, mtime)
+            return [res, mtime]
         else:
             return res
 
-    def get_lambda(self, cprob=None, init_vals=None):
+    def get_lambda(self, cprob=None, init_vals=None, sampleN=100):
         """ fit with Fermi-dirac distribution """
 
         if cprob is None:
-            if self._sampling is None:
-                self._sampling = self.get_classProbability()
+            self.get_cprob(sampleN=sampleN)
         else:
             self._sampling = cprob
 
         if init_vals is None:
-            init_vals = [0.1, self._sampleSize*self._rho*0.1]
+            init_vals = [0.1, self._sampleN*self._rho*0.1]
+
         if self._debug: print('... fitting: initial l2, l1 = {}'.format(init_vals))
         x = self._sampling['Rank'].values
         self._fit_vals, covar = curve_fit(fd, x, self._prob, p0=init_vals)
         if self._debug: print('... fitting: final l2, l1 = {}'.format(self._fit_vals))
+
         return (-self._fit_vals[1], self._fit_vals[0])
 
     def plot_hist(self, filename='', show=True):
         """ plot histogram """
 
-        bins = 50
         plt.close('all')
-        fig = plt.figure(figsize=(6,5))
+        fig = plt.figure(figsize=(14, 5))
+        ax1 = fig.add_subplot(121)
 
-        sns.distplot(self._s0, bins=bins, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
-        sns.distplot(self._s1, bins=bins, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
-        x = np.linspace(self._mu0-2*self._std0, self._mu0+2*self._std0, bins)
-        y = np.exp(-(x - self._mu0)^2/(2*self._std0^2))*np.sqrt(2/np.pi)*self._sampleN
-        plt.plot(x, y)
+        bins = 50
+
+        sns.distplot(self._s0, bins=bins, norm_hist=True, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
+        sns.distplot(self._s1, bins=bins, norm_hist=True, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
+        plt.plot(self._shapex0, self._shapey0)
+        plt.plot(self._shapex1, self._shapey1)
         
         plt.annotate("mu={}\ns={}".format(self._mu0, self._std0), xy=(self._mu0, 0), xytext=(0.25, 0.25),
                 textcoords='axes fraction', horizontalalignment='left',
@@ -522,6 +530,20 @@ class Score_generator(object):
         plt.xlabel('Score')
         plt.ylabel('#')
         plt.legend()
+
+        ax2 = fig.add_subplot(122)
+        r = self._sampling['Rank'].values
+        c = self._sampling['P(1|r)'].values
+        label = 'Size={}, #={}'.format(len(self._prob), self._sampleN)
+
+        ax2.plot(r, c, '.', label=label, alpha=0.5)
+        ax2.set_xlabel('Rank')
+        ax2.set_ylabel('P(1|r)')
+        ax2.set_ylim((-0.05, 1.05))
+        if len(self._fit_vals) == 2:
+            msg = 'Fit: {:.3f}, {:.3f}'.format(self._fit_vals[0], self._fit_vals[1])
+            ax2.plot(r, fd(r, self._fit_vals[0], self._fit_vals[1]), label=msg)
+        ax2.legend()
 
         if filename == '':
             filename = 'score_hist.pdf'
@@ -642,7 +664,43 @@ class Score_generator(object):
         else:
             return axs
 
+    def plot_fermi(self, sn=100, label=None, show=True, cprob=None, axs=None, figsize=None):
+
+        if cprob is not None:
+            a = cprob
+        else:
+            a = self.get_cprob(sampleN=sn)
+
+        if axs is None:
+            plt.close('all')
+            if figsize is None:
+                fig = plt.figure(figsize=(10, 6))
+            else:
+                fig = plt.figure(figsize=figsize)
+            axs = fig.gca()
+
+        if label is None:
+            label = 'Size={}, #={}'.format(len(self._prob), self._sampleN)
+
+        r = a['Rank'].values
+        axs.plot(r, self._prob, '.', label=label, alpha=0.5)
+        axs.set_xlabel('Rank')
+        axs.set_ylabel('P(1|r)')
+        axs.set_ylim((-0.05, 1.05))
+        if len(self._fit_vals) == 2:
+            msg = 'Fit: {:.3f}, {:.3f}'.format(self._fit_vals[0], self._fit_vals[1])
+            axs.plot(r, fd(r, self._fit_vals[0], self._fit_vals[1]), label=msg)
+        axs.legend()
+
+        if show:
+            plt.show()
+            return
+        else:
+            return axs
+
 
 def fd(x, l1, l2):
     """ fermi-dirac distribution """
     return 1./(1.+np.exp(l1*x - l2))
+
+# vim:foldmethod=indent:foldlevel=0

@@ -1,21 +1,23 @@
 !_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
 !_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
-!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
-!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
-!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
-!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
-!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
-!_TAG_PROGRAM_VERSION	0.0.0	/9fcdb06/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+0	py_auc.py	/^        self._n0 = 0       # class 0$/;"	c	function:AUC.__init__
+1	py_auc.py	/^        self._n1 = 0       # class 1$/;"	c	function:AUC.__init__
 AUC	py_auc.py	/^class AUC(object):$/;"	c
-Installation	README.md	/^## Installation$/;"	s
+Score_generator	__init__.py	/^from test import Score_generator$/;"	i
 Score_generator	py_auc.py	/^class Score_generator(object):$/;"	c
 Score_generator	test.py	/^class Score_generator(object):$/;"	c
-Usage	README.md	/^## Usage$/;"	s
 __init__	py_auc.py	/^    def __init__(self):$/;"	m	class:Score_generator
 __init__	py_auc.py	/^    def __init__(self, data=None, debug=False):$/;"	m	class:AUC
 __init__	test.py	/^    def __init__(self):$/;"	m	class:Score_generator
 _generate	py_auc.py	/^    def _generate(self, kind, mu, std, n):$/;"	m	class:Score_generator
 _prepare	py_auc.py	/^    def _prepare(self):$/;"	m	class:AUC
+author	setup.py	/^    author='Sungcheol Kim',  # Optional$/;"	v
+author_email	setup.py	/^    author_email='kimsung@us.ibm.com',  # Optional$/;"	v
+average_precision_score	py_auc.py	/^from sklearn.metrics import average_precision_score$/;"	i
 cal_auc_bac	py_auc.py	/^    def cal_auc_bac(self, measure_time=False):$/;"	m	class:AUC
 cal_auc_rank	py_auc.py	/^    def cal_auc_rank(self, measure_time=False):$/;"	m	class:AUC
 cal_auc_sklearn	py_auc.py	/^    def cal_auc_sklearn(self, measure_time=False):$/;"	m	class:AUC
@@ -23,7 +25,13 @@ cal_auc_trapz	py_auc.py	/^    def cal_auc_trapz(self, measure_time=False):$/;"	m
 cal_auprc_rank	py_auc.py	/^    def cal_auprc_rank(self, measure_time=False):$/;"	m	class:AUC
 cal_auprc_sklearn	py_auc.py	/^    def cal_auprc_sklearn(self, measure_time=False):$/;"	m	class:AUC
 cal_auprc_trapz	py_auc.py	/^    def cal_auprc_trapz(self, measure_time=False):$/;"	m	class:AUC
+classifiers	setup.py	/^    classifiers=[  # Optional$/;"	v
+curve_fit	py_auc.py	/^from scipy.optimize import curve_fit$/;"	i
+description	setup.py	/^    description='classifier auc',  # Optional$/;"	v
+entry_points	setup.py	/^    entry_points={  # Optional$/;"	v
+extras_require	setup.py	/^    extras_require={  # Optional$/;"	v
 fd	py_auc.py	/^def fd(x, l1, l2):$/;"	f
+find_packages	setup.py	/^from setuptools import setup, find_packages$/;"	i
 generate	test.py	/^    def generate(self, kind, mu, std, n):$/;"	m	class:Score_generator
 get	py_auc.py	/^    def get(self):$/;"	m	class:Score_generator
 get	test.py	/^    def get(self):$/;"	m	class:Score_generator
@@ -31,23 +39,40 @@ get_asDataFrame	py_auc.py	/^    def get_asDataFrame(self):$/;"	m	class:Score_gen
 get_classProbability	py_auc.py	/^    def get_classProbability(self, sampleSize=100, sampleN=100, measure_time=False):$/;"	m	class:Score_generator
 get_classes_scores	py_auc.py	/^    def get_classes_scores(self, c, s):$/;"	m	class:AUC
 get_cprob	py_auc.py	/^    def get_cprob(self, sampleN=100, measure_time=False):$/;"	m	class:Score_generator
-get_lambda	py_auc.py	/^    def get_lambda(self, cprob=None, init_vals=None):$/;"	m	class:Score_generator
+get_lambda	py_auc.py	/^    def get_lambda(self, cprob=None, init_vals=None, sampleN=100):$/;"	m	class:Score_generator
 get_randomSample	py_auc.py	/^    def get_randomSample(self, n):$/;"	m	class:Score_generator
 get_scores	py_auc.py	/^    def get_scores(self, s0, s1):$/;"	m	class:AUC
 here	setup.py	/^here = path.abspath(path.dirname(__file__))$/;"	v
+install_requires	setup.py	/^    install_requires=['pandas', 'numpy'],  # Optional$/;"	v
+keywords	setup.py	/^    keywords='classifier auc',  # Optional$/;"	v
 long_description	setup.py	/^    long_description = f.read()$/;"	v
-np	py_auc.py	/^import numpy as np$/;"	I
-pd	py_auc.py	/^import pandas as pd$/;"	I
+long_description	setup.py	/^    long_description=long_description,  # Optional$/;"	v
+long_description_content_type	setup.py	/^    long_description_content_type='text\/markdown',  # Optional (see note above)$/;"	v
+matplotlib	py_auc.py	/^import matplotlib.pyplot as plt$/;"	i
+name	setup.py	/^    name='py_auc',  # Required$/;"	v
+np	py_auc.py	/^import numpy as np$/;"	i
+np	test.py	/^import numpy as np$/;"	i
+open	setup.py	/^from io import open$/;"	i
+package_data	setup.py	/^    package_data={  # Optional$/;"	v
+packages	setup.py	/^    packages=find_packages(exclude=['contrib', 'docs', 'tests']),  # Required$/;"	v
+path	setup.py	/^from os import path$/;"	i
+pd	py_auc.py	/^import pandas as pd$/;"	i
 plot_ROC	py_auc.py	/^    def plot_ROC(self, bins=50, filename=''):$/;"	m	class:AUC
+plot_fermi	py_auc.py	/^    def plot_fermi(self, sn=100, label=None, show=True, cprob=None, axs=None, figsize=None):$/;"	m	class:Score_generator
 plot_hist	py_auc.py	/^    def plot_hist(self, filename='', show=True):$/;"	m	class:Score_generator
-plot_prob	py_auc.py	/^    def plot_prob(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None/;"	m	class:Score_generator
-plot_rank	py_auc.py	/^    def plot_rank(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None/;"	m	class:Score_generator
+plot_prob	py_auc.py	/^    def plot_prob(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None, figsize=None):$/;"	m	class:Score_generator
+plot_rank	py_auc.py	/^    def plot_rank(self, filename='', ss=100, sn=100, axs=None, show=True, cprob=None, label=None, figsize=None):$/;"	m	class:Score_generator
 plot_rank	py_auc.py	/^    def plot_rank(self, sampling=10, filename=''):$/;"	m	class:AUC
-plt	py_auc.py	/^import matplotlib.pyplot as plt$/;"	I
-py_auc: probability based binary classifier metric calculation library	README.md	/^# py_auc: probability based binary classifier metric calculation library$/;"	c
-set	py_auc.py	/^    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, st/;"	m	class:Score_generator
+plt	py_auc.py	/^import matplotlib.pyplot as plt$/;"	i
+py_auc	test.py	/^import py_auc$/;"	i
+roc_auc_score	py_auc.py	/^from sklearn.metrics import roc_auc_score$/;"	i
+set	py_auc.py	/^    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, std1=2):$/;"	m	class:Score_generator
 set0	py_auc.py	/^    def set0(self, kind, mu, std, n):$/;"	m	class:Score_generator
 set0	test.py	/^    def set0(self, kind, mu, std, n):$/;"	m	class:Score_generator
 set1	py_auc.py	/^    def set1(self, kind, mu, std, n):$/;"	m	class:Score_generator
 set1	test.py	/^    def set1(self, kind, mu, std, n):$/;"	m	class:Score_generator
-sns	py_auc.py	/^import seaborn as sns$/;"	I
+setup	setup.py	/^from setuptools import setup, find_packages$/;"	i
+sns	py_auc.py	/^import seaborn as sns$/;"	i
+time	py_auc.py	/^import time$/;"	i
+url	setup.py	/^    url='https:\/\/github.com\/pypa\/sampleproject',  # Optional$/;"	v
+version	setup.py	/^    version='1.0.0.dev1',  # Required$/;"	v
