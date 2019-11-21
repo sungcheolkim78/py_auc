@@ -13,7 +13,7 @@ Score_generator	test.py	/^class Score_generator(object):$/;"	c
 __init__	py_auc.py	/^    def __init__(self):$/;"	m	class:Score_generator
 __init__	py_auc.py	/^    def __init__(self, data=None, debug=False):$/;"	m	class:AUC
 __init__	test.py	/^    def __init__(self):$/;"	m	class:Score_generator
-_generate	py_auc.py	/^    def _generate(self, kind, mu, std, n):$/;"	m	class:Score_generator
+_generate	py_auc.py	/^    def _generate(self, kind, mu, std, n, k):$/;"	m	class:Score_generator
 _prepare	py_auc.py	/^    def _prepare(self):$/;"	m	class:AUC
 author	setup.py	/^    author='Sungcheol Kim',  # Optional$/;"	v
 author_email	setup.py	/^    author_email='kimsung@us.ibm.com',  # Optional$/;"	v
@@ -67,10 +67,10 @@ plot_rank	py_auc.py	/^    def plot_rank(self, sampling=10, filename=''):$/;"	m	c
 plt	py_auc.py	/^import matplotlib.pyplot as plt$/;"	i
 py_auc	test.py	/^import py_auc$/;"	i
 roc_auc_score	py_auc.py	/^from sklearn.metrics import roc_auc_score$/;"	i
-set	py_auc.py	/^    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, std1=2):$/;"	m	class:Score_generator
-set0	py_auc.py	/^    def set0(self, kind, mu, std, n):$/;"	m	class:Score_generator
+set	py_auc.py	/^    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, k0=1, kind1='gaussian', mu1=1, std1=2, k1=1):$/;"	m	class:Score_generator
+set0	py_auc.py	/^    def set0(self, kind, mu, std, n, k=1):$/;"	m	class:Score_generator
 set0	test.py	/^    def set0(self, kind, mu, std, n):$/;"	m	class:Score_generator
-set1	py_auc.py	/^    def set1(self, kind, mu, std, n):$/;"	m	class:Score_generator
+set1	py_auc.py	/^    def set1(self, kind, mu, std, n, k=1):$/;"	m	class:Score_generator
 set1	test.py	/^    def set1(self, kind, mu, std, n):$/;"	m	class:Score_generator
 setup	setup.py	/^from setuptools import setup, find_packages$/;"	i
 sns	py_auc.py	/^import seaborn as sns$/;"	i

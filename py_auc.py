@@ -318,10 +318,10 @@ class Score_generator(object):
 
         self._debug = False
 
-    def _generate(self, kind, mu, std, n):
+    def _generate(self, kind, mu, std, n, k):
         """ set parameters of class """
 
-        if kind.lower() not in ['uniform', 'gaussian', 'triangle']:
+        if kind.lower() not in ['uniform', 'gaussian', 'triangle', 'gfamily']:
             kind = 'uniform'
 
         if kind.lower() == 'uniform':
@@ -333,44 +333,61 @@ class Score_generator(object):
             shapex = np.linspace(mu-2.5*std, mu+2.5*std, 50)
             shapey = 1/(std * np.sqrt(2 * np.pi)) * np.exp( - (shapex - mu)**2 / (2 * std**2))
         elif kind.lower() == 'triangle':
+            #if self._debug: print('... generating gaussian distribution with n={}, mu={}, sigma={}'.format(n, mu, std))
             temp = np.random.triangular(mu-std, mu, mu+std, size=n)
             shapex = np.array([mu-2*std, mu-std, mu, mu+std, mu+2*std])
             shapey = np.array([0, 0, 1/std, 0, 0])
+        elif kind.lower() == 'gfamily':
+            #if self._debug: print('... generating gaussian family with k = {}, n={}, mu={}, sigma={}'.format(k, n, mu, std))
+            temp = gaussfamily(k=k, n=n, mu=mu, std=std, show=False)
+            if k == 1:
+                std_k = std * np.sqrt(3*k)
+                shapex = np.array([mu-2*std_k, mu-std_k, mu-std_k, mu+std_k, mu+std_k, mu+2*std_k])
+                shapey = np.array([0, 0, 1/(2*std_k), 1/(2*std_k), 0, 0])
+            elif k == 2:
+                std_k = std * np.sqrt(3*k)
+                shapex = np.array([mu-2*std_k, mu-std_k, mu, mu+std_k, mu+2*std_k])
+                shapey = np.array([0, 0, 1/std_k, 0, 0])
+            else:
+                shapex = np.linspace(mu-2.5*std, mu+2.5*std, 50)
+                shapey = 1/(std * np.sqrt(2 * np.pi)) * np.exp( - (shapex - mu)**2 / (2 * std**2))
 
         return temp, kind, mu, std, n, shapex, shapey
 
-    def set0(self, kind, mu, std, n):
+    def set0(self, kind, mu, std, n, k=1):
         """
-        kind : ['uniform', 'gaussian', 'triangle']
+        kind : ['uniform', 'gaussian', 'triangle', 'gfamily']
         mu : mean
         std : standard deviation
         n : number of samples
         """
 
-        self._s0, self._kind0, self._mu0, self._std0, self._n0, self._shapex0, self._shapey0 = self._generate(kind, mu, std, n)
+        self._s0, self._kind0, self._mu0, self._std0, self._n0, self._shapex0, self._shapey0 = self._generate(kind, mu, std, n, k)
         self._n = self._n0 + self._n1
         self._rho = float(self._n1/self._n)
+        self._k0 = k
 
-    def set1(self, kind, mu, std, n):
+    def set1(self, kind, mu, std, n, k=1):
         """
-        kind : ['uniform', 'gaussian', 'triangle']
+        kind : ['uniform', 'gaussian', 'triangle', 'gfamily']
         mu : mean
         std : standard deviation
         n : number of samples
         """
-        self._s1, self._kind1, self._mu1, self._std1, self._n1, self._shapex1, self._shapey1 = self._generate(kind, mu, std, n)
+        self._s1, self._kind1, self._mu1, self._std1, self._n1, self._shapex1, self._shapey1 = self._generate(kind, mu, std, n, k)
         self._n = self._n0 + self._n1
         self._rho = float(self._n1/self._n)
+        self._k1 = k
 
-    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, kind1='gaussian', mu1=1, std1=2):
+    def set(self, n=10000, rho=0.5, kind0='gaussian', mu0=0, std0=2, k0=1, kind1='gaussian', mu1=1, std1=2, k1=1):
         """ generate score distribution """
 
         n1 = int(n*rho)
         n0 = n - n1
         if self._debug: print('... generating {} positive class'.format(n1))
-        self.set1(kind1, mu1, std1, n1)
+        self.set1(kind1, mu1, std1, n1, k=k1)
         if self._debug: print('... generating {} negative class'.format(n0))
-        self.set0(kind0, mu0, std0, n0)
+        self.set0(kind0, mu0, std0, n0, k=k0)
 
     def get(self):
         """ get scores """
@@ -451,8 +468,8 @@ class Score_generator(object):
         res['Rank'] = range(sampleN+1)[1:]
 
         for i in range(sampleN):
-            self.set0(self._kind0, self._mu0, self._std0, n0)
-            self.set1(self._kind1, self._mu1, self._std1, n1)
+            self.set0(self._kind0, self._mu0, self._std0, n0, k=self._k0)
+            self.set1(self._kind1, self._mu1, self._std1, n1, k=self._k1)
             temp = self.get_asDataFrame()
             temp0 = temp[temp['Class'] == 0]
             temp1 = temp[temp['Class'] == 1]
@@ -707,9 +724,13 @@ def fd(x, l1, l2):
 def gaussfamily(k=1, n=100, mu=0, std=1, show=True):
     """ generate random numbers from gaussian family distribution """
 
-    x = np.sum(np.random.rand(k, n), axis=0)/k*2*std + mu - std
+    x = np.sum(np.random.rand(k, n), axis=0)/k*2*std*np.sqrt(3*k) + mu - std*np.sqrt(3*k)
 
     if show:
+        c_std = np.std(x)
+        c_mu = np.mean(x)
+        print('... mean: {}, std: {}'.format(c_mu, c_std))
+
         plt.hist(x, bins=50)
         plt.show()
 
