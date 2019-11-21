@@ -32,6 +32,7 @@ entry_points	setup.py	/^    entry_points={  # Optional$/;"	v
 extras_require	setup.py	/^    extras_require={  # Optional$/;"	v
 fd	py_auc.py	/^def fd(x, l1, l2):$/;"	f
 find_packages	setup.py	/^from setuptools import setup, find_packages$/;"	i
+gaussfamily	py_auc.py	/^def gaussfamily(k=1, n=100, mu=0, std=1, show=True):$/;"	f
 generate	test.py	/^    def generate(self, kind, mu, std, n):$/;"	m	class:Score_generator
 get	py_auc.py	/^    def get(self):$/;"	m	class:Score_generator
 get	test.py	/^    def get(self):$/;"	m	class:Score_generator

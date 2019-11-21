@@ -703,4 +703,16 @@ def fd(x, l1, l2):
     """ fermi-dirac distribution """
     return 1./(1.+np.exp(l1*x - l2))
 
+
+def gaussfamily(k=1, n=100, mu=0, std=1, show=True):
+    """ generate random numbers from gaussian family distribution """
+
+    x = np.sum(np.random.rand(k, n), axis=0)/k*2*std + mu - std
+
+    if show:
+        plt.hist(x, bins=50)
+        plt.show()
+
+    return x
+
 # vim:foldmethod=indent:foldlevel=0
