@@ -266,8 +266,8 @@ class AUC(object):
 
         # score distribution
         ax2 = axs[2]
-        sns.distplot(self._spm.loc[self._spm['Class']==0, 'Score'], bins=bins, kde=False, rug=True, label='Class 0')
-        sns.distplot(self._spm.loc[self._spm['Class']==1, 'Score'], bins=bins, kde=False, rug=True, label='Class 1')
+        sns.histplot(self._spm.loc[self._spm['Class']==0, 'Score'], bins=bins, kde=False, rug=True, label='Class 0')
+        sns.histplot(self._spm.loc[self._spm['Class']==1, 'Score'], bins=bins, kde=False, rug=True, label='Class 1')
         ax2.legend(loc='upper right')
         ax2.set_xlabel('Scores')
         ax2.set_ylabel('#')
@@ -533,8 +533,8 @@ class Score_generator(object):
 
         bins = 50
 
-        sns.distplot(self._s0, bins=bins, norm_hist=True, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
-        sns.distplot(self._s1, bins=bins, norm_hist=True, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
+        sns.histplot(self._s0, bins=bins, norm_hist=True, kde=False, rug=True, label='Class 0 (#={})'.format(self._n0))
+        sns.histplot(self._s1, bins=bins, norm_hist=True, kde=False, rug=True, label='Class 1 (#={})'.format(self._n1))
         plt.plot(self._shapex0, self._shapey0)
         plt.plot(self._shapex1, self._shapey1)
         
